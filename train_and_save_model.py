@@ -80,3 +80,32 @@ x_train, x_test, y_train, y_test = train_test_split(
 
 print(f'  \n Training set: {x_train.shape[0]} samples')
 print(f'  \n Test set: {x_test.shape[0]} samples')
+
+
+# Train the Logistic Regression model
+print('\n' + '=' * 50)
+
+model = LogisticRegression(random_state=42, max_iter=1000)
+model.fit(x_train, y_train)
+print(f'Model trained successfully')
+
+# Make predictions and calculate accuracy
+y_pred = model.predict(x_test)
+accuracy = accuracy_score(y_test, y_pred)
+
+print('\n' + '=' * 50)
+print('RESULTS:')
+print(f'Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)')
+
+# Checks goal achivement
+if accuracy >= 0.78:
+    print(f'Goal achieved (78-80%)')
+else:
+    print(f'Below target (goal: 78-80%)')
+
+print('\n' + '=' * 50)
+print("\nPredictions excemples: ")
+for i in range(15):
+    print(f'Sample {i+1}: Actual={y_test.iloc[i]}, Predicted:{y_pred[i]}')
+
+print(y_pred)
