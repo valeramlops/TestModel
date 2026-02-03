@@ -9,6 +9,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+from joblib import dump, load
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -16,21 +18,20 @@ train = 'titanic_df/train.csv'
 
 df = pd.read_csv(train)
 
-print(f'\n Checks: ')
+print(f'\nErrors: ')
 
 if df.empty:
     raise ValueError("Dataset is empty!")
 if 'Survived' not in df.columns:
     raise ValueError("Target column 'Survived' not found!")
 
-print(f'\n')
-print('=' * 50)
-print(f'Columns in train df {list(df.columns)}')
+print('\n' + '=' * 50)
+print(f'\nColumns in train df {list(df.columns)}')
 
 features = ['Pclass', 'Sex', 'Age', 'Fare']
 
-print('=' * 50)
-print(f'\n Chosen columns for train: {list(features)}')
+print('\n' + '=' * 50)
+print(f'\nChosen columns for train: {list(features)}')
 
 # Why this columns?
 # Pclass - social-economy status
@@ -42,15 +43,15 @@ x = df[features].copy()
 y = df['Survived'].copy()
 
 # # Fill missing Age with median (better than mean for Age)
-print(f'\n Missed data in features before processing')
+print(f'\nMissed data in features before processing')
 print(x.isnull().sum())
 
 age_median = x['Age'].median()
-print(f'\n Age_median: {age_median:.1f}')
+print(f'\nAge_median: {age_median:.1f}')
 
 # Count how many missing values I am filling
 missing_age_count = x['Age'].isnull().sum()
-print(f'\n Filling {missing_age_count} missing Age values with median')
+print(f'\nFilling {missing_age_count} missing Age values with median')
 
 x['Age'] = x['Age'].fillna(age_median)
 
@@ -62,15 +63,14 @@ if x['Fare'].isnull().any():
     print(f'Filling {missing_fare_count} missing Fare values with median: {fare_median:.2f}')
     x['Fare'] = x['Fare'].fillna(fare_median)
 
-print(f'\n Missed data in features after processing')
+print(f'\nMissed data in features after processing')
 print(x.isnull().sum())
 
 # Coding Sex (male = 0, female = 1)
 x['Sex'] = x['Sex'].map({'male': 0, 'female': 1})
 
-print('\n')
-print(f'='*50)
-print('\n Splitting data into training and test sets:')
+print('\n' + '=' * 50)
+print('\nSplitting data into training and test sets:')
 x_train, x_test, y_train, y_test = train_test_split(
     x, y,
     test_size=0.2,
@@ -78,23 +78,56 @@ x_train, x_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-print(f'  \n Training set: {x_train.shape[0]} samples')
-print(f'  \n Test set: {x_test.shape[0]} samples')
+print(f'  \nTraining set: {x_train.shape[0]} samples')
+print(f'  \nTest set: {x_test.shape[0]} samples')
 
+# Creating scaler
+scaler = StandardScaler()
+x_train_scaled = scaler.fit_transform(x_train)
+x_test_scaled = scaler.transform(x_test)
+
+print('\n' + '=' * 50)
+print('\nScaling applied: ')
+print(f'Before scaling (first 3 train lines):\n {x_train.iloc[:3]}')
+print(f'After scaling (first 3 train lines):\n {x_train_scaled[:3]}')
 
 # Train the Logistic Regression model
 print('\n' + '=' * 50)
 
 model = LogisticRegression(random_state=42, max_iter=1000)
-model.fit(x_train, y_train)
-print(f'Model trained successfully')
+model.fit(x_train_scaled, y_train)
+print(f'\nModel trained successfully on scaled data')
 
-# Make predictions and calculate accuracy
-y_pred = model.predict(x_test)
+# Saving model
+print('\n' + '=' * 50)
+print('\nSaving model with joblib')
+dump(model, 'titanic_model.joblib')
+print('\nModel saved as titanic_model.joblib')
+
+# Saving scaler
+print('Saving scaler with joblib')
+dump(scaler, 'titanic_scaler.joblib')
+print('Scaler saved as titanic_scaler.joblib')
+
+# Also saving features for checking (if necessary)
+print('\nSaving features')
+dump(features, 'titanic_features.joblib')
+print('Featues saved as titanic_features.joblib')
+
+# Message about saving
+print('\n' + '=' * 50)
+print('\nAll files saved successfully')
+print('Files created: ')
+print('1. titanic_model.joblib - trained model')
+print('2. titanic_scaler.joblib - fitted scaler')
+print('3. titanic_features.joblib - list of features used')
+
+# Make predictions on scaled data and calculate accuracy
+y_pred = model.predict(x_test_scaled)
 accuracy = accuracy_score(y_test, y_pred)
 
 print('\n' + '=' * 50)
-print('RESULTS:')
+print('\nRESULTS:')
 print(f'Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)')
 
 # Checks goal achivement
@@ -107,5 +140,3 @@ print('\n' + '=' * 50)
 print("\nPredictions excemples: ")
 for i in range(15):
     print(f'Sample {i+1}: Actual={y_test.iloc[i]}, Predicted:{y_pred[i]}')
-
-print(y_pred)
