@@ -1,6 +1,6 @@
 # The first trained model is a logical regression model.
 # Titanic Survival Prediction - Logistic Regression Model
-# Author: Quantum parser
+# Author: Gydron
 # Date: 01.02.2026
 # Description: First ML model implementation with proper MLOps practices
 
